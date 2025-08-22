@@ -1,4 +1,4 @@
-# bt-demo
+# bst-demo
 Binary Search Tree Demo for The Odin Project.
 
 
