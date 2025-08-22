@@ -1,7 +1,5 @@
-# blank-template
-Blank Template (no webpack).
-Just to  get basic folder structure ready.
-Update it accordingly when using it.
+# bt-demo
+Binary Search Tree Demo for The Odin Project.
 
 
 Developed by Shaunak Basu / https://github.com/basushaunak
