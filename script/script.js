@@ -15,10 +15,46 @@ class Tree {
     }
   }
   //Write insert(value) and deleteItem(value) functions that insert/delete the given value. You’ll have to deal with several cases for delete, such as when a node has children or not. If you need additional resources, check out these two articles on inserting and deleting, or this video on BST inserting/removing with several visual examples.
-  insert(value) {}
+  insert(value) {
+    let newNode = new Node(value);
+    if (!this.root) {
+      this.root = newNode;
+      return;
+    }
+    this.#insertNode(this.root, newNode);
+  }
+  #insertNode(subTreeRoot, newNode) {
+    if (newNode.value < subTreeRoot.value) {
+      if (subTreeRoot.left === null) {
+        subTreeRoot.left = newNode;
+      } else {
+        this.#insertNode(subTreeRoot.left, newNode);
+      }
+    } else if (newNode.value > subTreeRoot.value) {
+      if (subTreeRoot.right === null) {
+        subTreeRoot.right = newNode;
+      } else {
+        this.#insertNode(subTreeRoot.right, newNode);
+      }
+    } else {
+      console.log(`Duplicate value (${newNode.value}), skipping...`);
+    }
+  }
   deleteItem(value) {}
   find(value) {
     //Write a find(value) function that returns the node with the given value.
+    return this.#searchNode(this.root, value);
+  }
+  #searchNode(subTreeRoot, value) {
+    if (subTreeRoot === null) {
+      return null;
+    } else if (subTreeRoot.value === value) {
+      return subTreeRoot;
+    } else if (value < subTreeRoot.value) {
+      return this.#searchNode(subTreeRoot.left, value);
+    } else if (value > subTreeRoot.value) {
+      return this.#searchNode(subTreeRoot.right, value);
+    }
   }
   levelOrderForEach(callback) {
     //Write a levelOrderForEach(callback) function that accepts a callback function as its parameter. levelOrderForEach should traverse the tree in breadth-first level order and call the callback on each node as it traverses, passing the whole node as an argument, similarly to how Array.prototype.forEach might work for arrays. levelOrderForEach may be implemented using either iteration or recursion (try implementing both!). If no callback function is provided, throw an Error reporting that a callback is required. Tip: You will want to use an array acting as a queue to keep track of all the child nodes that you have yet to traverse and to add new ones to the list (video on level order traversal).
@@ -40,6 +76,28 @@ class Tree {
     //Write a rebalance function that rebalances an unbalanced tree. Tip: You’ll want to use a traversal method to provide a new array to the buildTree function.
   }
 
+  minNode(subTreeRoot = this.root) {
+    if (subTreeRoot === null) {
+      return null;
+    }
+    let currentNode = subTreeRoot;
+    while (currentNode.left) {
+      currentNode = currentNode.left;
+    }
+    return currentNode;
+  }
+
+  maxNode(subTreeRoot = this.root) {
+    if (subTreeRoot === null) {
+      return null;
+    }
+    let currentNode = subTreeRoot;
+    while (currentNode.right) {
+      currentNode = currentNode.right;
+    }
+    return currentNode;
+  }
+
   buildTree(array, isSorted = false) {
     let sortedArray = [];
     if (isSorted) {
@@ -48,6 +106,72 @@ class Tree {
       sortedArray = [...new Set(this.#mergeSort(array))]; // Sorts the array and removes any duplicates from it
     }
     this.root = this.#buildSubTree(sortedArray);
+  }
+
+  printTree(node = this.root, prefix = "", isLeft = true) {
+    if (node === null) return;
+
+    if (node.right !== null) {
+      this.printTree(node.right, prefix + (isLeft ? "│   " : "    "), false);
+    }
+
+    console.log(prefix + (isLeft ? "└── " : "┌── ") + node.data);
+
+    if (node.left !== null) {
+      this.printTree(node.left, prefix + (isLeft ? "    " : "│   "), true);
+    }
+  }
+
+  renderTree(container = document.getElementById("tree-container")) {
+    container.innerHTML = "";
+    const svg = document.getElementById("tree-lines");
+    svg.innerHTML = "";
+
+    const levelGap = 80; // vertical space
+    const nodeGap = 50; // horizontal base spacing
+
+    const positions = new Map();
+
+    // Recursively assign positions
+    const assignPositions = (node, depth, x) => {
+      if (!node) return x;
+
+      // Traverse left
+      x = assignPositions(node.left, depth + 1, x);
+
+      // Current node position
+      const pos = { x: x * nodeGap + 50, y: depth * levelGap + 50 };
+      positions.set(node, pos);
+
+      // Traverse right
+      x = assignPositions(node.right, depth + 1, x + 1);
+
+      return x;
+    };
+
+    assignPositions(this.root, 0, 0);
+
+    // Draw nodes
+    positions.forEach((pos, node) => {
+      const nodeEl = document.createElement("div");
+      nodeEl.className = "tree-node";
+      nodeEl.textContent = node.data;
+      nodeEl.style.left = pos.x + "px";
+      nodeEl.style.top = pos.y + "px";
+      container.appendChild(nodeEl);
+    });
+
+    // Draw lines
+    positions.forEach((pos, node) => {
+      if (node.left) {
+        const childPos = positions.get(node.left);
+        this.#drawLine(svg, pos, childPos);
+      }
+      if (node.right) {
+        const childPos = positions.get(node.right);
+        this.#drawLine(svg, pos, childPos);
+      }
+    });
   }
 
   #buildSubTree(array, start = 0, end = array.length - 1) {
@@ -61,18 +185,16 @@ class Tree {
     return newNode;
   }
 
-  printTree(node = this.root, prefix = "", isLeft = true) {
-    if (node === null) return;
-
-    if (node.right !== null) {
-      this.print(node.right, prefix + (isLeft ? "│   " : "    "), false);
-    }
-
-    console.log(prefix + (isLeft ? "└── " : "┌── ") + node.data);
-
-    if (node.left !== null) {
-      this.print(node.left, prefix + (isLeft ? "    " : "│   "), true);
-    }
+  // Private helper
+  #drawLine(svg, parentPos, childPos) {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", parentPos.x + 20);
+    line.setAttribute("y1", parentPos.y + 20);
+    line.setAttribute("x2", childPos.x + 20);
+    line.setAttribute("y2", childPos.y + 20);
+    line.setAttribute("stroke", "#333");
+    line.setAttribute("stroke-width", "2");
+    svg.appendChild(line);
   }
 
   #mergeSort(array) {
