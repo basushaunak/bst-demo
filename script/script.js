@@ -41,17 +41,32 @@ class Tree {
     }
   }
   deleteItem(value) {
-    if(this.root === null){
+    if (this.root === null) {
       return false;
     }
-    this.#deleteNode(this.root,value);
+    this.#deleteNode(this.root, value);
   }
-  #deleteNode(subTreeRoot,valueToDelete){
-    if(subTreeRoot === null){
-      return subTreeRoot;
-    }
 
+  #deleteNode(subTreeRoot, value) {
+    if (subTreeRoot === null) return null;
+
+    if (value < subTreeRoot.value) {
+      subTreeRoot.left = this.deleteRec(subTreeRoot.left, value);
+    } else if (value > subTreeRoot.value) {
+      subTreeRoot.right = this.deleteRec(subTreeRoot.right, value);
+    } else {
+      // Node found
+      if (!subTreeRoot.left) return subTreeRoot.right;
+      if (!subTreeRoot.right) return subTreeRoot.left;
+
+      // Two children → replace with inorder successor
+      let successorValue = this.min(subTreeRoot.right);
+      subTreeRoot.value = successorValue;
+      subTreeRoot.right = this.deleteRec(subTreeRoot.right, successorValue);
+    }
+    return subTreeRoot;
   }
+
   find(value) {
     //Write a find(value) function that returns the node with the given value.
     return this.#searchNode(this.root, value);
@@ -67,70 +82,62 @@ class Tree {
       return this.#searchNode(subTreeRoot.right, value);
     }
   }
-    //Write a levelOrderForEach(callback) function that accepts a callback function
-    //  as its parameter. levelOrderForEach should traverse the tree in 
-    // breadth-first level order and call the callback on each node as it traverses,
-    // passing the whole node as an argument, similarly to how 
-    // Array.prototype.forEach might work for arrays. levelOrderForEach may be 
-    // implemented using either iteration or recursion (try implementing both!). 
-    // If no callback function is provided, throw an Error reporting that a 
-    // callback is required. Tip: You will want to use an array acting as a queue 
-    // to keep track of all the child nodes that you have yet to traverse and to 
-    // add new ones to the list (video on level order traversal).
+  //Write a levelOrderForEach(callback) function that accepts a callback function
+  //  as its parameter. levelOrderForEach should traverse the tree in
+  // breadth-first level order and call the callback on each node as it traverses,
+  // passing the whole node as an argument, similarly to how
+  // Array.prototype.forEach might work for arrays. levelOrderForEach may be
+  // implemented using either iteration or recursion (try implementing both!).
+  // If no callback function is provided, throw an Error reporting that a
+  // callback is required. Tip: You will want to use an array acting as a queue
+  // to keep track of all the child nodes that you have yet to traverse and to
+  // add new ones to the list (video on level order traversal).
   levelOrderForEach(callback) {
-    if(callback === null){
+    if (callback === null) {
       throw "You must provide a callback function as an argument";
     }
   }
-  //Write inOrderForEach(callback), preOrderForEach(callback), and 
+  //Write inOrderForEach(callback), preOrderForEach(callback), and
   // postOrderForEach(callback) functions that also accept a callback as a parameter.
-  // Each of these functions should traverse the tree in their respective 
-  // depth-first order and pass each node to the provided callback. 
-  // The functions should throw an Error if no callback is given as an argument, 
-  // like with levelOrderForEach. The video Binary Tree Traversal: Preorder, Inorder, 
+  // Each of these functions should traverse the tree in their respective
+  // depth-first order and pass each node to the provided callback.
+  // The functions should throw an Error if no callback is given as an argument,
+  // like with levelOrderForEach. The video Binary Tree Traversal: Preorder, Inorder,
   // Postorder explains the topic clearly.
   inOrderForEach(callback) {
-    if(callback === null){
+    if (callback === null) {
       throw new Error("You must provide a callback function as an argument");
     }
   }
   preOrderForEach(callback) {
-    if(callback === null){
+    if (callback === null) {
       throw new Error("You must provide a callback function as an argument");
     }
   }
   postOrderForEach(callback) {
-    if(callback === null){
+    if (callback === null) {
       throw new Error("You must provide a callback function as an argument");
     }
   }
-  //Write a height(value) function that returns the height of the node containing 
-  // the given value. Height is defined as the number of edges in the longest 
-  // path from that node to a leaf node. If the value is not found in the tree, 
+  //Write a height(value) function that returns the height of the node containing
+  // the given value. Height is defined as the number of edges in the longest
+  // path from that node to a leaf node. If the value is not found in the tree,
   // the function should return null.
-  height(value) {
-    
-  }
-  //Write a depth(value) function that returns the depth of the node containing 
-  // the given value. Depth is defined as the number of edges in the path from 
-  // that node to the root node. If the value is not found in the tree, 
+  height(value) {}
+  //Write a depth(value) function that returns the depth of the node containing
+  // the given value. Depth is defined as the number of edges in the path from
+  // that node to the root node. If the value is not found in the tree,
   // the function should return null.
-  depth(value) {
-    
-  }
-  //Write an isBalanced function that checks if the tree is balanced. 
-  // A binary tree is considered balanced if, for every node in the tree, 
-  // the height difference between its left and right subtrees is no more than 1, 
+  depth(value) {}
+  //Write an isBalanced function that checks if the tree is balanced.
+  // A binary tree is considered balanced if, for every node in the tree,
+  // the height difference between its left and right subtrees is no more than 1,
   // and both the left and right subtrees are also balanced.
-  isBalanced() {
-    
-  }
-  //Write a rebalance function that rebalances an unbalanced tree. 
-  // Tip: You’ll want to use a traversal method to provide a new array to the 
+  isBalanced() {}
+  //Write a rebalance function that rebalances an unbalanced tree.
+  // Tip: You’ll want to use a traversal method to provide a new array to the
   // buildTree function.
-  rebalance() {
-    
-  }
+  rebalance() {}
 
   //Returns the node with the minimum value in the sub tree
   minNode(subTreeRoot = this.root) {
@@ -156,7 +163,7 @@ class Tree {
     return currentNode;
   }
 
-  //Builds a BST from an array, if the array is not sorted, it will sort the array 
+  //Builds a BST from an array, if the array is not sorted, it will sort the array
   // and make it unique (no duplicate values).
   buildTree(array, isSorted = false) {
     let sortedArray = [];
