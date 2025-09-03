@@ -24,45 +24,50 @@ class Tree {
     this.#insertNode(this.root, newNode);
   }
   #insertNode(subTreeRoot, newNode) {
-    if (newNode.value < subTreeRoot.value) {
+    if (newNode.data < subTreeRoot.data) {
       if (subTreeRoot.left === null) {
         subTreeRoot.left = newNode;
       } else {
         this.#insertNode(subTreeRoot.left, newNode);
       }
-    } else if (newNode.value > subTreeRoot.value) {
+    } else if (newNode.data > subTreeRoot.data) {
       if (subTreeRoot.right === null) {
         subTreeRoot.right = newNode;
       } else {
         this.#insertNode(subTreeRoot.right, newNode);
       }
     } else {
-      console.log(`Duplicate value (${newNode.value}), skipping...`);
+      console.log(`Duplicate value (${newNode.data}), skipping...`);
     }
   }
   deleteItem(value) {
     if (this.root === null) {
       return false;
     }
-    this.#deleteNode(this.root, value);
+    let originalRoot = this.root;
+    this.root = this.#deleteNode(this.root, value);
+    return this.root !== originalRoot || this.find(value) === null;
   }
 
   #deleteNode(subTreeRoot, value) {
     if (subTreeRoot === null) return null;
 
-    if (value < subTreeRoot.value) {
-      subTreeRoot.left = this.deleteRec(subTreeRoot.left, value);
-    } else if (value > subTreeRoot.value) {
-      subTreeRoot.right = this.deleteRec(subTreeRoot.right, value);
+    if (value < subTreeRoot.data) {
+      subTreeRoot.left = this.#deleteNode(subTreeRoot.left, value);
+    } else if (value > subTreeRoot.data) {
+      subTreeRoot.right = this.#deleteNode(subTreeRoot.right, value);
     } else {
       // Node found
       if (!subTreeRoot.left) return subTreeRoot.right;
       if (!subTreeRoot.right) return subTreeRoot.left;
 
       // Two children → replace with inorder successor
-      let successorValue = this.min(subTreeRoot.right);
-      subTreeRoot.value = successorValue;
-      subTreeRoot.right = this.deleteRec(subTreeRoot.right, successorValue);
+      let successorNode = this.minNode(subTreeRoot.right);
+      subTreeRoot.data = successorNode.data;
+      subTreeRoot.right = this.#deleteNode(
+        subTreeRoot.right,
+        successorNode.data
+      );
     }
     return subTreeRoot;
   }
@@ -74,11 +79,11 @@ class Tree {
   #searchNode(subTreeRoot, value) {
     if (subTreeRoot === null) {
       return null;
-    } else if (subTreeRoot.value === value) {
+    } else if (subTreeRoot.data === value) {
       return subTreeRoot;
-    } else if (value < subTreeRoot.value) {
+    } else if (value < subTreeRoot.data) {
       return this.#searchNode(subTreeRoot.left, value);
-    } else if (value > subTreeRoot.value) {
+    } else if (value > subTreeRoot.data) {
       return this.#searchNode(subTreeRoot.right, value);
     }
   }
@@ -92,9 +97,19 @@ class Tree {
   // callback is required. Tip: You will want to use an array acting as a queue
   // to keep track of all the child nodes that you have yet to traverse and to
   // add new ones to the list (video on level order traversal).
-  levelOrderForEach(callback) {
-    if (callback === null) {
-      throw "You must provide a callback function as an argument";
+  levelOrderForEach(callback, subTreeRoot = this.root) {
+    if (typeof callback !== "function") {
+      throw new Error("You must provide a callback function as an argument");
+    }
+    let queue = [];
+    if (subTreeRoot) {
+      queue = [subTreeRoot];
+    }
+    while (queue.length > 0) {
+      const node = queue.shift(); // remove queue[0] from queue
+      callback(node);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
     }
   }
   //Write inOrderForEach(callback), preOrderForEach(callback), and
@@ -104,40 +119,112 @@ class Tree {
   // The functions should throw an Error if no callback is given as an argument,
   // like with levelOrderForEach. The video Binary Tree Traversal: Preorder, Inorder,
   // Postorder explains the topic clearly.
-  inOrderForEach(callback) {
-    if (callback === null) {
+  inOrderForEach(callback, subTreeRoot = this.root) {
+    if (typeof callback !== "function") {
       throw new Error("You must provide a callback function as an argument");
+    }
+    let stack = [];
+    let current = subTreeRoot;
+
+    while (current || stack.length > 0) {
+      while (current) {
+        stack.push(current);
+        current = current.left;
+      }
+
+      current = stack.pop();
+      callback(current);
+      current = current.right;
     }
   }
-  preOrderForEach(callback) {
-    if (callback === null) {
+
+  preOrderForEach(callback, subTreeRoot = this.root) {
+    if (typeof callback !== "function") {
       throw new Error("You must provide a callback function as an argument");
+    }
+    if (!subTreeRoot) return;
+    let stack = [subTreeRoot];
+    while (stack.length > 0) {
+      let node = stack.pop();
+      callback(node);
+      if (node.right) stack.push(node.right);
+      if (node.left) stack.push(node.left);
     }
   }
-  postOrderForEach(callback) {
-    if (callback === null) {
+  postOrderForEach(callback, subTreeRoot = this.root) {
+    if (typeof callback !== "function") {
       throw new Error("You must provide a callback function as an argument");
     }
+    if (!subTreeRoot) return;
+
+    let stack = [subTreeRoot];
+    let result = [];
+
+    while (stack.length > 0) {
+      let node = stack.pop();
+      result.push(node);
+      if (node.left) stack.push(node.left);
+      if (node.right) stack.push(node.right);
+    }
+
+    result.reverse().forEach(callback);
   }
   //Write a height(value) function that returns the height of the node containing
   // the given value. Height is defined as the number of edges in the longest
   // path from that node to a leaf node. If the value is not found in the tree,
   // the function should return null.
-  height(value) {}
+  height(value) {
+    const node = this.find(value);
+    if (!node) return null;
+
+    const calcHeight = (n) => {
+      if (!n) return -1; // height of null = -1, leaf = 0
+      return 1 + Math.max(calcHeight(n.left), calcHeight(n.right));
+    };
+
+    return calcHeight(node);
+  }
   //Write a depth(value) function that returns the depth of the node containing
   // the given value. Depth is defined as the number of edges in the path from
   // that node to the root node. If the value is not found in the tree,
   // the function should return null.
-  depth(value) {}
+  depth(value) {
+    let depth = 0;
+    let current = this.root;
+    while (current) {
+      if (current.data === value) return depth;
+      depth++;
+      current = value < current.data ? current.left : current.right;
+    }
+    return null; // not found
+  }
   //Write an isBalanced function that checks if the tree is balanced.
   // A binary tree is considered balanced if, for every node in the tree,
   // the height difference between its left and right subtrees is no more than 1,
   // and both the left and right subtrees are also balanced.
-  isBalanced() {}
+  isBalanced(node = this.root) {
+    if (!node) return true;
+
+    let height = (n) => {
+      if (!n) return -1;
+      return 1 + Math.max(height(n.left), height(n.right));
+    };
+
+    let leftHeight = height(node.left);
+    let rightHeight = height(node.right);
+
+    if (Math.abs(leftHeight - rightHeight) > 1) return false;
+
+    return this.isBalanced(node.left) && this.isBalanced(node.right);
+  }
   //Write a rebalance function that rebalances an unbalanced tree.
   // Tip: You’ll want to use a traversal method to provide a new array to the
   // buildTree function.
-  rebalance() {}
+  rebalance() {
+    let values = [];
+    this.inOrderForEach((node) => values.push(node.data));
+    this.buildTree(values, true);
+  }
 
   //Returns the node with the minimum value in the sub tree
   minNode(subTreeRoot = this.root) {
@@ -189,58 +276,6 @@ class Tree {
       this.printTree(node.left, prefix + (isLeft ? "    " : "│   "), true);
     }
   }
-  //Renders the tree on the current webpage.
-  renderTree(container = document.getElementById("tree-container")) {
-    container.innerHTML = "";
-    const svg = document.getElementById("tree-lines");
-    svg.innerHTML = "";
-
-    const levelGap = 80; // vertical space
-    const nodeGap = 50; // horizontal base spacing
-
-    const positions = new Map();
-
-    // Recursively assign positions
-    const assignPositions = (node, depth, x) => {
-      if (!node) return x;
-
-      // Traverse left
-      x = assignPositions(node.left, depth + 1, x);
-
-      // Current node position
-      const pos = { x: x * nodeGap + 50, y: depth * levelGap + 50 };
-      positions.set(node, pos);
-
-      // Traverse right
-      x = assignPositions(node.right, depth + 1, x + 1);
-
-      return x;
-    };
-
-    assignPositions(this.root, 0, 0);
-
-    // Draw nodes
-    positions.forEach((pos, node) => {
-      const nodeEl = document.createElement("div");
-      nodeEl.className = "tree-node";
-      nodeEl.textContent = node.data;
-      nodeEl.style.left = pos.x + "px";
-      nodeEl.style.top = pos.y + "px";
-      container.appendChild(nodeEl);
-    });
-
-    // Draw lines
-    positions.forEach((pos, node) => {
-      if (node.left) {
-        const childPos = positions.get(node.left);
-        this.#drawLine(svg, pos, childPos);
-      }
-      if (node.right) {
-        const childPos = positions.get(node.right);
-        this.#drawLine(svg, pos, childPos);
-      }
-    });
-  }
 
   #buildSubTree(array, start = 0, end = array.length - 1) {
     if (start > end) {
@@ -251,18 +286,6 @@ class Tree {
     newNode.left = this.#buildSubTree(array, start, mid - 1);
     newNode.right = this.#buildSubTree(array, mid + 1, end);
     return newNode;
-  }
-
-  // Private helper
-  #drawLine(svg, parentPos, childPos) {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", parentPos.x + 20);
-    line.setAttribute("y1", parentPos.y + 20);
-    line.setAttribute("x2", childPos.x + 20);
-    line.setAttribute("y2", childPos.y + 20);
-    line.setAttribute("stroke", "#333");
-    line.setAttribute("stroke-width", "2");
-    svg.appendChild(line);
   }
 
   #mergeSort(array) {
